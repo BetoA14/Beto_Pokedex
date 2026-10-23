@@ -1,0 +1,65 @@
+﻿.welcome {
+  width: 100%;
+  max-width: 680px;
+  padding: clamp(28px, 6vw, 64px);
+  background: #fff;
+  border: 1px solid #e2e1da;
+  border-radius: 24px;
+}
+
+.pokeball {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border: 3px solid #222c3d;
+  border-radius: 50%;
+  background: linear-gradient(#dc4646 46%, #222c3d 46%, #222c3d 54%, #fff 54%);
+  margin-bottom: 32px;
+}
+
+.pokeball::after {
+  content: '';
+  position: absolute;
+  inset: 17px;
+  border: 3px solid #222c3d;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.eyebrow {
+  color: #a83333;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  margin: 16px 0;
+}
+
+.intro {
+  color: #556174;
+  line-height: 1.7;
+}
+
+.connection {
+  margin: 32px 0 0;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: #f1f3f5;
+  line-height: 1.5;
+}
+
+.connection.connected {
+  background: #e9f5ed;
+  color: #21623b;
+}
+
+.connection.unavailable {
+  background: #fff0ee;
+  color: #9d2929;
+}
