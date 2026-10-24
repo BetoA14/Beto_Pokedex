@@ -1,4 +1,15 @@
-import type { PokemonPage } from "../types/pokemon";
+import type { Pokemon, PokemonPage } from "../types/pokemon";
+
+// Preserve HTTP status codes so the UI can distinguish a missing Pokemon from an outage.
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 // Expected health response; TypeScript types do not validate incoming JSON.
 interface HealthResponse {
@@ -31,7 +42,27 @@ export async function getPokemonPage(
   const response = await fetch(`/api/pokemon?${query}`, { signal });
 
   if (!response.ok) {
-    throw new Error("Could not load Pokémon. Please try again.");
+    throw new ApiError(response.status, "Could not load Pokémon. Please try again.");
+  }
+
+  return response.json();
+}
+
+// Encode the name as one URL segment, even if the input contains punctuation.
+export async function getPokemonByName(
+  name: string,
+  signal: AbortSignal,
+): Promise<Pokemon> {
+  const response = await fetch(`/api/pokemon/${encodeURIComponent(name)}`, { signal });
+
+  if (response.status === 404) {
+    throw new ApiError(404, "Pokémon not found.");
+  }
+  if (response.status === 400) {
+    throw new ApiError(400, "Use a full Pokémon name, such as pikachu or mr-mime, or a positive ID.");
+  }
+  if (!response.ok) {
+    throw new ApiError(response.status, "Could not search for Pokémon. Please try again.");
   }
 
   return response.json();

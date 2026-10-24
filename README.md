@@ -3,7 +3,8 @@
 A fullstack Pokémon web application built with React, TypeScript, and Express.
 The backend supports paginated Pokémon lists and lookup by name or ID, with
 validated responses and an in-memory cache. React displays Pokémon cards with
-images, names, types, height, and weight, with 20 Pokémon per page.
+images, names, types, height, and weight, with 20 Pokémon per page. Search submits
+an exact name or ID to the backend lookup endpoint and displays the matching card.
 
 ## Requirements
 
@@ -23,6 +24,10 @@ On Windows PowerShell, use `npm.cmd` instead of `npm` if script execution is blo
 Open the frontend URL printed by Vite (normally http://localhost:5173).
 The page loads a Pokémon card grid with Previous/Next controls. It also handles
 loading, failed requests with a retry button, empty results, and unavailable images.
+Use the search form or press Enter to look up a full name such as `pikachu` or
+`mr-mime`. Searches ignore letter case and surrounding whitespace. A missing
+Pokémon shows a 404 view. **Show all Pokémon** clears the search and returns to
+the collection page you were browsing. Pagination is hidden during lookup.
 Stop both applications with Ctrl+C.
 If you already have Vite running, stop it before using the root development command.
 
@@ -163,13 +168,12 @@ With the backend running, try these directly in your browser:
 
 ## Next milestones
 
-- Connect name search to the existing lookup endpoint, with a not-found view.
 - Persist favorites in SQLite using a browser-generated UUID.
 - Publish the completed code to a public Git repository.
 
-React consumes `/api/pokemon` through our REST backend. Only image assets are
-loaded directly from their sprite host. The exact-name/ID lookup endpoint exists
-on the backend; the browser search interface and favorites are not implemented yet.
+React consumes `/api/pokemon` and `/api/pokemon/:nameOrId` through our REST backend.
+Only image assets are loaded directly from their sprite host. Search uses exact
+names rather than substring matching. Favorites are not implemented yet.
 
 ## AI assistance
 

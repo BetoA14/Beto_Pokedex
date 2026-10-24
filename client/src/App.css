@@ -61,6 +61,58 @@ h1 {
   margin: 0;
 }
 
+/* Let the input and buttons wrap naturally on smaller screens. */
+.search-form {
+  margin-top: 28px;
+}
+
+.search-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.search-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.search-controls input {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #b9c2b3;
+  border-radius: 8px;
+  background: #fff;
+  color: #253047;
+  font: inherit;
+}
+
+.search-controls input:focus-visible {
+  outline: 3px solid #a73730;
+  outline-offset: 3px;
+}
+
+.search-form p {
+  color: #596477;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+
+.not-found-code {
+  color: #a73730;
+  font-size: 2.5rem;
+  font-weight: 750;
+}
+
+.collection-message h3 {
+  margin: 0;
+}
+
 .collection {
   border-top: 1px solid #dedfd9;
   padding-top: 28px;
@@ -161,16 +213,43 @@ h2 {
 }
 
 /* Labels keep types understandable even without their background colors. */
-.type-grass, .type-bug { background: #e0eedb; }
-.type-poison, .type-ghost { background: #eee0f4; }
-.type-fire { background: #fce4d6; }
-.type-water, .type-ice { background: #dceef9; }
-.type-flying { background: #e8e6fa; }
-.type-electric { background: #f8edbc; }
-.type-ground, .type-rock { background: #eee4d1; }
-.type-fairy, .type-psychic { background: #f8e0e9; }
-.type-fighting, .type-dragon { background: #f0dfdc; }
-.type-dark, .type-steel { background: #dfe5eb; }
+.type-grass,
+.type-bug {
+  background: #e0eedb;
+}
+.type-poison,
+.type-ghost {
+  background: #eee0f4;
+}
+.type-fire {
+  background: #fce4d6;
+}
+.type-water,
+.type-ice {
+  background: #dceef9;
+}
+.type-flying {
+  background: #e8e6fa;
+}
+.type-electric {
+  background: #f8edbc;
+}
+.type-ground,
+.type-rock {
+  background: #eee4d1;
+}
+.type-fairy,
+.type-psychic {
+  background: #f8e0e9;
+}
+.type-fighting,
+.type-dragon {
+  background: #f0dfdc;
+}
+.type-dark,
+.type-steel {
+  background: #dfe5eb;
+}
 
 .pokemon-measurements {
   display: grid;
@@ -223,12 +302,16 @@ h2 {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Respect users who prefer a static loading indicator. */
 @media (prefers-reduced-motion: reduce) {
-  .loading-dot { animation: none; }
+  .loading-dot {
+    animation: none;
+  }
 }
 
 .pagination {
@@ -281,8 +364,16 @@ button:disabled {
 }
 
 @media (max-width: 480px) {
-  .pokedex { padding: 24px 16px; }
-  .brand { margin-bottom: 36px; }
-  .pagination { gap: 8px; }
-  button { padding: 11px 12px; }
+  .pokedex {
+    padding: 24px 16px;
+  }
+  .brand {
+    margin-bottom: 36px;
+  }
+  .pagination {
+    gap: 8px;
+  }
+  button {
+    padding: 11px 12px;
+  }
 }

@@ -32,6 +32,9 @@
 8. The user asked: "Let's move on to connecting these endpoints to Pokémon cards
    in React". Codex connected the listing endpoint to reusable cards, added
    pagination, loading/error/retry/empty states and image fallbacks, and updated docs.
+9. The user asked: "Let's continue to connecting a name search to the lookup
+   endpoint". Codex added a submitted search form, exact-name/ID lookup, a 404
+   view, and a way back to the previous collection page, with comments and explanations.
 
 ## Technical decisions and ownership
 
@@ -45,6 +48,8 @@
 | React component state and effects | Manage page data, loading, errors, offset, and retry locally without another state library; cancel outdated requests during effect cleanup | Suggested by Codex |
 | Reusable PokemonCard component and frontend API types | Each card receives a Pokemon prop; local type definitions keep the client independent of backend modules, with the trade-off of keeping response types in sync | Suggested and implemented by Codex |
 | CSS Grid with automatic columns | Adapt the collection to available width without a UI dependency | Suggested and implemented by Codex |
+| Separate editable input and submitted search term | Fetch only on submission, permit repeated searches, and keep typing from changing the displayed result | Suggested and implemented by Codex |
+| Client ApiError with an HTTP status | Distinguish missing Pokemon from invalid input and retryable failures without trusting arbitrary upstream error bodies | Suggested and implemented by Codex |
 | Native Node 24 TypeScript execution | Runs the development backend without an additional TypeScript runner; the compiler emits JavaScript for the build | Suggested by Codex |
 | SQLite and a browser UUID for favorites | Planned persistence without account setup; UUID identification is not secure authentication | Suggested by Codex, based on the assignment recommendations; not implemented yet |
 | Backend PokéAPI wrapper | Keep Pokémon data requests on the server and expose a smaller response shape with explicit measurement units | Assignment requirement; implementation designed by Codex |
@@ -123,3 +128,20 @@
   dependencies, package scripts, backend behavior, or lockfiles were changed.
 - Search and favorites remain later milestones so the implementation stays
   incremental and reviewable for the user.
+
+### Name search milestone verification
+
+- `npm.cmd run build` and `npm.cmd run lint` passed.
+- Extended the temporary DOM check to exercise the actual form, input events,
+  React effects, and lookup requests through Vite to the live backend. Verified
+  trimmed/case-normalized names, repeated submissions, hyphenated names, numeric
+  IDs, missing names, invalid input, and search failure/retry recovery.
+- Checked that typing alone does not fetch, whitespace-only input is disabled,
+  pagination disappears during lookup, and clearing restores the previous offset.
+- Deliberately delayed responses were ignored after a newer search or clearing.
+  Existing card, pagination, empty-state, image-fallback, and cleanup checks passed.
+- An initial check failed because PowerShell changed accented assertion text
+  passed to Node through stdin. Unicode escapes fixed the temporary harness;
+  no application change was needed for that failure.
+- No new application dependencies or backend changes were required. Visual layout
+  was not checked in a browser; DOM checks do not measure responsive layout.
