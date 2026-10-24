@@ -1,9 +1,11 @@
+// Exercise real local HTTP routes while replacing all upstream PokeAPI requests.
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import test from 'node:test'
 import { createApp } from '../src/app.ts'
 import { createPokemonService } from '../src/services/pokemon.ts'
 
+// Minimal valid upstream fixture containing every field our parser consumes.
 function pokemon(id = 25, name = 'pikachu') {
   return {
     id,
@@ -20,6 +22,7 @@ function pokemon(id = 25, name = 'pikachu') {
   }
 }
 
+// Port 0 selects a free port; always close the server even when an assertion fails.
 async function withApi(fetcher: typeof fetch, check: (baseUrl: string) => Promise<void>) {
   const server = createApp(createPokemonService({ fetcher })).listen(0, '127.0.0.1')
   await once(server, 'listening')
@@ -65,6 +68,7 @@ test('listing returns details and local pagination URLs and reuses cached resour
     })
     assert.equal((await fetch(`${base}/api/pokemon?limit=2&offset=0`)).status, 200)
     assert.equal((await fetch(`${base}/api/pokemon/pikachu`)).status, 200)
+    // Only the initial list and its two detail requests should reach upstream.
     assert.equal(calls.length, 3)
   })
 })
@@ -78,6 +82,7 @@ test('lookup normalizes name case and whitespace, and supports IDs and hyphenate
     for (const key of ['%20PIKACHU%20', 'pikachu', '00025', 'mr-mime']) {
       assert.equal((await fetch(`${base}/api/pokemon/${key}`)).status, 200)
     }
+    // Equivalent names share a key; numeric IDs intentionally use a separate key.
     assert.deepEqual(calls, [
       'https://pokeapi.co/api/v2/pokemon/pikachu/',
       'https://pokeapi.co/api/v2/pokemon/25/',
@@ -101,6 +106,7 @@ test('invalid query values and lookup keys return 400 without requesting PokeAPI
       assert.equal(response.status, 400, suffix)
       assert.equal(typeof (await response.json()).message, 'string')
     }
+    // Validation must reject bad input before contacting the external service.
     assert.equal(calls, 0)
   })
 })
@@ -139,6 +145,7 @@ test('missing Pokemon return JSON 404 and failures are not cached', async () => 
 })
 
 test('upstream HTTP, network, and timeout failures return controlled JSON errors', async () => {
+  // Simulate failures directly so tests do not depend on outages or real timeouts.
   const cases: { fetcher: typeof fetch; status: number }[] = [
     { fetcher: async () => new Response('Private upstream details', { status: 503 }), status: 502 },
     { fetcher: async () => { throw new TypeError('Private network details') }, status: 502 },
@@ -160,6 +167,7 @@ test('malformed Pokemon data is rejected before caching, then retried successful
   let calls = 0
   await withApi(async () => {
     calls += 1
+    // A bad first response must not poison the cache for the valid retry.
     return Response.json(calls === 1 ? { ...pokemon(), weight: 'sixty' } : pokemon())
   }, async (base) => {
     const bad = await fetch(`${base}/api/pokemon/pikachu`)
@@ -203,6 +211,7 @@ test('list detail requests are limited to five at a time', async () => {
     }
     active += 1
     maximum = Math.max(maximum, active)
+    // Keep requests overlapping for one event-loop turn to measure concurrency.
     await new Promise((resolve) => setImmediate(resolve))
     active -= 1
     return Response.json(pokemon())
@@ -211,6 +220,7 @@ test('list detail requests are limited to five at a time', async () => {
   assert.equal(maximum, 5)
 })
 
+// Advance the injected clock to verify the configured production cache lifetime.
 test('service cache refreshes after one hour', async () => {
   let time = 0
   let calls = 0

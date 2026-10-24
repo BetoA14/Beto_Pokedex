@@ -4,7 +4,8 @@
 
 - OpenAI Codex, GPT-6-based assistant. The exact deployed model build is not
   exposed in this session. Used for project planning, backend scaffolding,
-  connecting React to Express, documentation, and verification.
+  connecting React to Express, Pokémon cards and pagination, documentation,
+  and verification.
 - No additional AI agents were used.
 
 ## Main prompts and iteration
@@ -23,6 +24,14 @@
 5. The user asked to "return to adding the backend endpoint that fetches and caches
    Pokémon from PokéAPI". Codex implemented listing and exact-name/ID lookup,
    bounded caching, runtime validation, error responses, tests, and documentation.
+6. The user requested: "Add useful comments to all .ts and .tsx files. Keep them
+   brief but understandable." Codex added comments explaining purpose and less
+   obvious behavior across the 14 project TypeScript files, preserving existing code.
+7. The user requested useful brief comments, beginner-friendly explanations of
+   changes, smaller steps, and consistent semicolons and commas in new code.
+8. The user asked: "Let's move on to connecting these endpoints to Pokémon cards
+   in React". Codex connected the listing endpoint to reusable cards, added
+   pagination, loading/error/retry/empty states and image fallbacks, and updated docs.
 
 ## Technical decisions and ownership
 
@@ -33,7 +42,9 @@
 | Node.js, Express, and TypeScript | Keep both sides in one language with a small REST layer | Suggested by Codex; user accepted the proposed structure |
 | Separate client and server packages in one repository | Clear boundaries; separate dependency installs managed through root scripts | Suggested by Codex |
 | Vite development proxy | Relative `/api` requests without extra CORS middleware locally; production routing remains to be configured | Suggested by Codex |
-| React component state and effects | Enough for the current health request without another state library | Suggested by Codex |
+| React component state and effects | Manage page data, loading, errors, offset, and retry locally without another state library; cancel outdated requests during effect cleanup | Suggested by Codex |
+| Reusable PokemonCard component and frontend API types | Each card receives a Pokemon prop; local type definitions keep the client independent of backend modules, with the trade-off of keeping response types in sync | Suggested and implemented by Codex |
+| CSS Grid with automatic columns | Adapt the collection to available width without a UI dependency | Suggested and implemented by Codex |
 | Native Node 24 TypeScript execution | Runs the development backend without an additional TypeScript runner; the compiler emits JavaScript for the build | Suggested by Codex |
 | SQLite and a browser UUID for favorites | Planned persistence without account setup; UUID identification is not secure authentication | Suggested by Codex, based on the assignment recommendations; not implemented yet |
 | Backend PokéAPI wrapper | Keep Pokémon data requests on the server and expose a smaller response shape with explicit measurement units | Assignment requirement; implementation designed by Codex |
@@ -76,6 +87,7 @@
   caching, expiry, eviction, concurrent request sharing, and detail request batching.
 - `npm.cmd run build`: both applications built successfully.
 - `npm.cmd run lint`: frontend linting and backend/test type-checking passed.
+
 - A live HTTP check against the compiled backend and real PokéAPI passed: a page
   returned Bulbasaur and Ivysaur, lookup returned Pikachu with the expected ID and
   converted height, and an unknown name returned 404. The first two-item page made
@@ -85,3 +97,29 @@
   responses expose no upstream body, and pagination links remain on our own API.
 - The frontend remains at the connection-check milestone. User review of the new
   endpoints and implementation is pending; automated checks do not replace it.
+
+### Comment update verification
+
+- Compared all 14 TypeScript files with a snapshot taken before the edit: every
+  non-comment line was unchanged, including the user's existing formatting edits.
+- `npm.cmd test`: all 15 tests passed after the comments were added.
+- `npm.cmd run lint`: frontend linting and backend/test type-checking passed.
+
+### React card milestone verification
+
+- `npm.cmd run build`: both applications built successfully.
+- `npm.cmd run lint`: frontend linting and backend/test type-checking passed.
+- A temporary jsdom check in ignored scratch space exercised the actual React
+  components, effects, and click handlers. It loaded real API responses through
+  Vite's proxy and verified 20 cards, first/next/previous pages, and disabled
+  navigation while loading.
+- Controlled responses verified error/retry recovery, an empty collection, missing
+  image URLs, broken-image events, and cancellation on cleanup. JSON requests
+  stayed on our backend's `/api/pokemon` endpoint.
+- Computer-use browser verification was attempted, but no browser surface was
+  available. The in-memory DOM checks do not verify visual layout or real image
+  downloads; those still need review in a browser.
+- jsdom was installed only in ignored temporary check space. No application
+  dependencies, package scripts, backend behavior, or lockfiles were changed.
+- Search and favorites remain later milestones so the implementation stays
+  incremental and reviewable for the user.

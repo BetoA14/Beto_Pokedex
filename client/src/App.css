@@ -1,65 +1,288 @@
-﻿.welcome {
-  width: 100%;
-  max-width: 680px;
-  padding: clamp(28px, 6vw, 64px);
-  background: #fff;
-  border: 1px solid #e2e1da;
-  border-radius: 24px;
+﻿/* Keep the page readable on narrow screens without a separate mobile layout. */
+.pokedex {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  padding: 40px 24px 24px;
 }
 
+.pokedex-header {
+  padding: 8px 0 40px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 750;
+  font-size: 1.05rem;
+  margin-bottom: 48px;
+}
+
+/* Draw a small brand mark with CSS rather than loading another image. */
 .pokeball {
   position: relative;
-  width: 56px;
-  height: 56px;
-  border: 3px solid #222c3d;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #253047;
   border-radius: 50%;
-  background: linear-gradient(#dc4646 46%, #222c3d 46%, #222c3d 54%, #fff 54%);
-  margin-bottom: 32px;
+  background: linear-gradient(#d94e47 45%, #253047 45%, #253047 55%, #fff 55%);
 }
 
 .pokeball::after {
-  content: '';
+  content: "";
   position: absolute;
-  inset: 17px;
-  border: 3px solid #222c3d;
+  inset: 8px;
+  border: 2px solid #253047;
   border-radius: 50%;
   background: #fff;
 }
 
 .eyebrow {
-  color: #a83333;
+  color: #a73730;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  margin: 0 0 14px;
 }
 
 h1 {
-  font-size: clamp(2rem, 5vw, 3rem);
-  line-height: 1.12;
-  letter-spacing: -0.04em;
-  margin: 16px 0;
+  max-width: 760px;
+  font-size: clamp(2.1rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+  margin: 0 0 18px;
 }
 
 .intro {
-  color: #556174;
+  color: #596477;
   line-height: 1.7;
+  margin: 0;
 }
 
-.connection {
-  margin: 32px 0 0;
-  padding: 14px 18px;
-  border-radius: 10px;
-  background: #f1f3f5;
-  line-height: 1.5;
+.collection {
+  border-top: 1px solid #dedfd9;
+  padding-top: 28px;
 }
 
-.connection.connected {
-  background: #e9f5ed;
-  color: #21623b;
+.collection-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.connection.unavailable {
-  background: #fff0ee;
-  color: #9d2929;
+h2 {
+  font-size: 1.15rem;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.collection-count {
+  color: #596477;
+  font-size: 0.85rem;
+}
+
+/* Columns expand automatically; min(100%, ...) prevents narrow-screen overflow. */
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 20px;
+}
+
+.pokemon-card {
+  overflow: hidden;
+  border: 1px solid #e1e4de;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.pokemon-artwork {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 226px;
+  padding: 32px 20px 14px;
+  background: radial-gradient(circle at center, #fff 5%, #f0f3ed 80%);
+}
+
+.pokemon-artwork img {
+  object-fit: contain;
+  max-width: 100%;
+}
+
+.pokemon-number {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  color: #69758a;
+  font-size: 0.75rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.image-placeholder {
+  color: #647085;
+  font-size: 0.85rem;
+}
+
+.pokemon-info {
+  padding: 20px;
+}
+
+.pokemon-info h3 {
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+  text-transform: capitalize;
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+
+.pokemon-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+.type-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: #29364b;
+  background: #eef0f3;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+/* Labels keep types understandable even without their background colors. */
+.type-grass, .type-bug { background: #e0eedb; }
+.type-poison, .type-ghost { background: #eee0f4; }
+.type-fire { background: #fce4d6; }
+.type-water, .type-ice { background: #dceef9; }
+.type-flying { background: #e8e6fa; }
+.type-electric { background: #f8edbc; }
+.type-ground, .type-rock { background: #eee4d1; }
+.type-fairy, .type-psychic { background: #f8e0e9; }
+.type-fighting, .type-dragon { background: #f0dfdc; }
+.type-dark, .type-steel { background: #dfe5eb; }
+
+.pokemon-measurements {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-top: 16px;
+  margin: 0;
+  border-top: 1px solid #edf0eb;
+}
+
+.pokemon-measurements dt {
+  color: #69758a;
+  font-size: 0.7rem;
+  margin-bottom: 4px;
+}
+
+.pokemon-measurements dd {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.collection-message {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  color: #596477;
+  line-height: 1.6;
+}
+
+.collection-message p {
+  margin: 0;
+}
+
+.error-message {
+  color: #a73730;
+}
+
+.loading-dot {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #dedfd9;
+  border-top-color: #c6463e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Respect users who prefer a static loading indicator. */
+@media (prefers-reduced-motion: reduce) {
+  .loading-dot { animation: none; }
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 28px;
+}
+
+.pagination p {
+  color: #596477;
+  font-size: 0.8rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+button {
+  border: 1px solid #cdd2ca;
+  border-radius: 8px;
+  padding: 11px 18px;
+  background: #fff;
+  color: #253047;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #edf0e9;
+  border-color: #99a28f;
+}
+
+button:focus-visible {
+  outline: 3px solid #a73730;
+  outline-offset: 3px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pokedex-footer {
+  border-top: 1px solid #dedfd9;
+  margin-top: 32px;
+  padding-top: 20px;
+  text-align: center;
+  color: #69758a;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .pokedex { padding: 24px 16px; }
+  .brand { margin-bottom: 36px; }
+  .pagination { gap: 8px; }
+  button { padding: 11px 12px; }
 }

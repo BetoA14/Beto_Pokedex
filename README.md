@@ -2,8 +2,8 @@
 
 A fullstack Pokémon web application built with React, TypeScript, and Express.
 The backend supports paginated Pokémon lists and lookup by name or ID, with
-validated responses and an in-memory cache. The React page currently checks
-the backend connection; the Pokémon interface is the next milestone.
+validated responses and an in-memory cache. React displays Pokémon cards with
+images, names, types, height, and weight, with 20 Pokémon per page.
 
 ## Requirements
 
@@ -21,7 +21,9 @@ npm run dev
 
 On Windows PowerShell, use `npm.cmd` instead of `npm` if script execution is blocked.
 Open the frontend URL printed by Vite (normally http://localhost:5173).
-The page should display **Backend connected**. Stop both applications with Ctrl+C.
+The page loads a Pokémon card grid with Previous/Next controls. It also handles
+loading, failed requests with a retry button, empty results, and unavailable images.
+Stop both applications with Ctrl+C.
 If you already have Vite running, stop it before using the root development command.
 
 The API listens on http://127.0.0.1:3001. During development, Vite forwards `/api`
@@ -48,8 +50,10 @@ the Vite proxy applies only during development.
 
 ```text
 client/                  React frontend
-  src/App.tsx            Main page and connection status
+  src/App.tsx            Page loading, error handling, and pagination
+  src/components/       Reusable Pokémon cards
   src/services/api.ts    Calls to our REST API
+  src/types/pokemon.ts   Frontend types matching the API response
   vite.config.ts         Development proxy
 server/                  Express backend
   src/app.ts             Express configuration and routes
@@ -159,13 +163,13 @@ With the backend running, try these directly in your browser:
 
 ## Next milestones
 
-- Display Pokémon images, names, and details, with loading and not-found states.
+- Connect name search to the existing lookup endpoint, with a not-found view.
 - Persist favorites in SQLite using a browser-generated UUID.
 - Publish the completed code to a public Git repository.
 
-React will consume our REST API; Pokémon data requests will be made by the backend.
-The Pokémon endpoints are ready for the frontend to consume. Favorites are not
-implemented yet.
+React consumes `/api/pokemon` through our REST backend. Only image assets are
+loaded directly from their sprite host. The exact-name/ID lookup endpoint exists
+on the backend; the browser search interface and favorites are not implemented yet.
 
 ## AI assistance
 
