@@ -305,3 +305,9 @@ names rather than substring matching. Favorites are saved locally through
 ## AI assistance
 
 See [AI_USAGE.md](AI_USAGE.md) for tools, prompts, decisions, and verification.
+
+## Additional project notes
+
+See [additional_items.md](additional_items.md) for the approximately 8-hour effort
+estimate and activity breakdown, scalability limits, and accessibility/responsive
+design considerations.

@@ -54,6 +54,11 @@
 14. The user requested a review of all `.ts` and `.tsx` files for additional useful,
     brief comments explaining how the code works. Codex reviewed and expanded comments
     in all 21 project TypeScript files, including source, Vite configuration, and tests.
+15. The user requested `additional_items.md` covering time spent and its split,
+    scalability, and accessibility/responsive design. The user supplied an estimate
+    of around 8 total hours. Codex documented that total and a qualitative activity
+    breakdown, without inventing per-phase hours, and separated implemented
+    behavior from scaling recommendations and outstanding accessibility checks.
 
 ## Technical decisions and ownership
 
