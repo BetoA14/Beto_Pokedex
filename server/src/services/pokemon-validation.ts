@@ -3,6 +3,7 @@ import type { Pokemon } from "../types/pokemon.ts";
 
 // never means this helper always throws; callers cannot continue with invalid data.
 function invalidResponse(): never {
+  // 502 identifies bad upstream data; a caller's invalid input is handled as 400 in routes.
   throw new HttpError(502, "PokeAPI returned an invalid response");
 }
 
@@ -52,14 +53,16 @@ function imageUrl(value: unknown): string | null {
 export function parsePokemon(value: unknown): Pokemon {
   const data = object(value);
   const id = nonNegativeInteger(data.id);
+  // Zero passes the shared nonnegative-number check but is not a valid Pokemon ID.
   if (id === 0) return invalidResponse();
 
-  // Prefer official artwork, falling back to the default sprite when it is null.
+  // Prefer official artwork; missing or null artwork leaves the default sprite in place.
   const sprites = object(data.sprites);
   let image = imageUrl(sprites.front_default);
   if (sprites.other !== undefined && sprites.other !== null) {
     const artwork = object(sprites.other)["official-artwork"];
     if (artwork !== undefined && artwork !== null) {
+      // ?? keeps the fallback only for null/undefined, rather than for every falsy value.
       image = imageUrl(object(artwork).front_default) ?? image;
     }
   }
@@ -82,6 +85,7 @@ export function parsePokemon(value: unknown): Pokemon {
       const stat = object(entry);
       return {
         name: name(object(stat.stat).name),
+        // Translate the upstream snake_case field into our API's camelCase field.
         baseStat: nonNegativeInteger(stat.base_stat),
       };
     }),

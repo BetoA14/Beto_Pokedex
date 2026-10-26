@@ -4,11 +4,21 @@
   "private": true,
   "description": "A fullstack Pokedex built with React and Express",
   "scripts": {
-    "setup": "npm install --prefix client && npm install --prefix server",
+    "setup": "node scripts/setup.mjs",
+    "check": "node scripts/check-environment.mjs",
+    "predev": "npm run check",
     "dev": "concurrently --kill-others --names server,client \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "build": "npm run build --prefix server && npm run build --prefix client",
     "lint": "npm run lint --prefix client && npm run typecheck --prefix server",
-    "test": "npm test --prefix server"
+    "test": "npm test --prefix server",
+    "prestart": "npm run check",
+    "start": "node server/dist/index.js",
+    "smoke": "node scripts/smoke-test.mjs",
+    "verify": "npm run lint && npm test && npm run build && npm run smoke"
+  },
+  "engines": {
+    "node": ">=24.21.0 <25",
+    "npm": ">=11 <12"
   },
   "devDependencies": {
     "concurrently": "^10.0.6",

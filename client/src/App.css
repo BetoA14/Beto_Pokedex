@@ -113,6 +113,19 @@ h1 {
   margin: 0;
 }
 
+/* Indicate which view is selected without relying only on the grid heading. */
+.view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.view-controls button[aria-pressed="true"] {
+  background: #fff4cf;
+  border-color: #e3c66f;
+}
+
 .collection {
   border-top: 1px solid #dedfd9;
   padding-top: 28px;
@@ -352,6 +365,43 @@ button:focus-visible {
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* Keep the selected state distinct while allowing the same button to toggle it off. */
+.favorite-button {
+  width: 100%;
+  margin-top: 18px;
+  font-size: 0.8rem;
+}
+
+.favorite-button[aria-pressed="true"] {
+  opacity: 1;
+  color: #725000;
+  background: #fff4cf;
+  border-color: #e3c66f;
+}
+
+.favorite-error {
+  color: #a73730;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+
+.favorites-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 14px;
+  border: 1px solid #dedfd9;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.favorites-notice p {
+  margin: 0;
 }
 
 .pokedex-footer {

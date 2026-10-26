@@ -32,6 +32,7 @@ export function createPokemonService({
       if (!response.ok) {
         throw new HttpError(502, "PokeAPI is temporarily unavailable");
       }
+      // Await parsing here so malformed JSON is also caught by this error handler.
       return await response.json();
     } catch (error) {
       // Preserve intentional statuses; translate other failures into API errors.
@@ -47,6 +48,7 @@ export function createPokemonService({
   }
 
   // Validate before caching; rejected or malformed responses are never stored.
+  // Names and numeric IDs remain separate cache keys, even for the same Pokemon.
   const getPokemon = createCachedLoader(
     async (key) =>
       parsePokemon(await request(`pokemon/${key}/`, "Pokemon not found")),
@@ -70,6 +72,7 @@ export function createPokemonService({
     // our response includes real image URLs without a burst of 50 requests.
     for (let index = 0; index < page.names.length; index += 5) {
       const batch = page.names.slice(index, index + 5);
+      // Promise.all preserves input order; the next batch waits for this one to finish.
       results.push(
         ...(await Promise.all(
           batch.map((pokemonName) => getPokemon(pokemonName)),
@@ -84,6 +87,7 @@ export function createPokemonService({
       count: page.count,
       limit,
       offset,
+      // null tells the client to disable navigation at either end of the collection.
       next: offset + limit < page.count ? pageUrl(offset + limit) : null,
       previous: offset > 0 ? pageUrl(Math.max(0, offset - limit)) : null,
       results,

@@ -10,6 +10,7 @@ function integerQuery(
   max: number,
 ): number {
   if (value === undefined) return fallback;
+  // Check digits before conversion so strings such as 1e1 are not accepted as numbers.
   if (typeof value !== "string" || !/^\d+$/.test(value)) {
     throw new HttpError(400, "limit and offset must be whole numbers");
   }
@@ -25,6 +26,7 @@ export function createPokemonRouter(service: PokemonService) {
   const router = Router();
 
   router.get("/", async (request, response) => {
+    // Query parameters follow ? in the URL; path parameters belong to /:nameOrId below.
     const limit = integerQuery(request.query.limit, 20, 1, 50);
     // Leave room to add the maximum page size without exceeding safe integers.
     const offset = integerQuery(

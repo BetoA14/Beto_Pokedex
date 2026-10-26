@@ -10,6 +10,7 @@ export function createCachedLoader<T>(
   load: (key: string) => Promise<T>,
   { ttlMs, maxEntries, now = Date.now }: CacheOptions,
 ) {
+  // The returned function keeps access to these maps between calls through a closure.
   const cache = new Map<string, { value: T; expiresAt: number }>();
   // Share unfinished loads so simultaneous callers do not duplicate work.
   const pending = new Map<string, Promise<T>>();
@@ -17,6 +18,7 @@ export function createCachedLoader<T>(
   return async function get(key: string): Promise<T> {
     const cached = cache.get(key);
     if (cached && cached.expiresAt > now()) {
+      // A read does not extend the lifetime or change insertion order.
       return cached.value;
     }
     // Expired entries must be reloaded before they can be returned.
@@ -28,6 +30,7 @@ export function createCachedLoader<T>(
     // Defer loading until after registering the promise, even for synchronous throws.
     const request = Promise.resolve()
       .then(() => load(key))
+      // This callback runs only after success, so rejected loads never enter the cache.
       .then((value) => {
         // Remove expired values before deciding whether the cache needs room.
         for (const [entryKey, entry] of cache) {

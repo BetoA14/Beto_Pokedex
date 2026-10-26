@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import test from 'node:test'
 import { createApp } from '../src/app.ts'
+import { createFavoritesStore } from '../src/db/favorites.ts';
 import { createPokemonService } from '../src/services/pokemon.ts'
 
 // Minimal valid upstream fixture containing every field our parser consumes.
@@ -24,16 +25,21 @@ function pokemon(id = 25, name = 'pikachu') {
 
 // Port 0 selects a free port; always close the server even when an assertion fails.
 async function withApi(fetcher: typeof fetch, check: (baseUrl: string) => Promise<void>) {
-  const server = createApp(createPokemonService({ fetcher })).listen(0, '127.0.0.1')
+  // Keep the existing Pokemon tests independent of the user's local database.
+  const favorites = createFavoritesStore(':memory:');
+  const server = createApp(createPokemonService({ fetcher }), favorites).listen(0, '127.0.0.1')
+  // Wait for the listening event before issuing requests to the temporary server.
   await once(server, 'listening')
   try {
     const address = server.address()
     assert.ok(address && typeof address === 'object')
     await check(`http://127.0.0.1:${address.port}`)
   } finally {
+    // Convert Node's close callback to a Promise so cleanup finishes before the test ends.
     await new Promise<void>((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve())
     })
+    favorites.close();
   }
 }
 
@@ -209,6 +215,7 @@ test('list detail requests are limited to five at a time', async () => {
     if (url.includes('?')) {
       return Response.json({ count: 12, results: Array.from({ length: 12 }, (_, id) => ({ name: `pokemon-${id + 1}` })) })
     }
+    // Measure overlapping detail loads, rather than just the total number of requests.
     active += 1
     maximum = Math.max(maximum, active)
     // Keep requests overlapping for one event-loop turn to measure concurrency.

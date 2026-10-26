@@ -4,8 +4,8 @@
 
 - OpenAI Codex, GPT-6-based assistant. The exact deployed model build is not
   exposed in this session. Used for project planning, backend scaffolding,
-  connecting React to Express, Pokémon cards and pagination, documentation,
-  and verification.
+  connecting React to Express, Pokémon cards and pagination, local SQLite favorites,
+  documentation, and verification.
 - No additional AI agents were used.
 
 ## Main prompts and iteration
@@ -35,6 +35,25 @@
 9. The user asked: "Let's continue to connecting a name search to the lookup
    endpoint". Codex added a submitted search form, exact-name/ID lookup, a 404
    view, and a way back to the previous collection page, with comments and explanations.
+10. The user asked where SQLite data would live, then requested: "Let's implement
+    SQLite and keep the favorites stored in the local computer." Codex implemented
+    a local SQLite store, favorites REST endpoints, browser UUID identification,
+    React favorite controls, tests, and documentation.
+11. The user requested: "Make sure this project can run on any computer without
+    issues, including the local database". Codex audited portable paths and setup,
+    added runtime requirements, locked clean installation, optional environment
+    configuration, built frontend serving, a portability smoke check, and a
+    Windows/macOS/Linux CI workflow, then tested a fresh standalone copy.
+12. The user requested removing a Pokémon by clicking the **★ Favorite** button.
+    Codex added browser-scoped DELETE support and changed the control into an
+    add/remove toggle with confirmation, pending states, failure retry, and tests.
+13. The user requested: "Add a button to do Show all Favorites which pulls the
+    favorite Pokemons and show them in the card grid". Codex added a favorites
+    grid mode using saved IDs and the existing lookup API, view navigation,
+    loading/empty/error states, and synchronization with confirmed favorite changes.
+14. The user requested a review of all `.ts` and `.tsx` files for additional useful,
+    brief comments explaining how the code works. Codex reviewed and expanded comments
+    in all 21 project TypeScript files, including source, Vite configuration, and tests.
 
 ## Technical decisions and ownership
 
@@ -51,7 +70,17 @@
 | Separate editable input and submitted search term | Fetch only on submission, permit repeated searches, and keep typing from changing the displayed result | Suggested and implemented by Codex |
 | Client ApiError with an HTTP status | Distinguish missing Pokemon from invalid input and retryable failures without trusting arbitrary upstream error bodies | Suggested and implemented by Codex |
 | Native Node 24 TypeScript execution | Runs the development backend without an additional TypeScript runner; the compiler emits JavaScript for the build | Suggested by Codex |
-| SQLite and a browser UUID for favorites | Planned persistence without account setup; UUID identification is not secure authentication | Suggested by Codex, based on the assignment recommendations; not implemented yet |
+| SQLite and a browser UUID for favorites | Records stay in server/data/pokedex.sqlite and survive restarts; each browser stores its identity locally without account setup | Local SQLite storage explicitly chosen by the user; UUID approach suggested by Codex from the assignment recommendations |
+| Built-in node:sqlite and synchronous prepared statements | Avoid an additional driver or database service; brief synchronous operations suit this small local app, while larger workloads may need a different approach | Suggested and implemented by Codex |
+| Idempotent PUT/DELETE favorites | The composite key prevents duplicate additions; deletion matches UUID and Pokemon ID and needs no upstream request | Initial add behavior suggested by Codex; removal explicitly requested by the user |
+| Custom useFavorites hook | Keep favorite loading and shared state separate from browsing/search and let all cards reflect successful saves consistently | Suggested and implemented by Codex |
+| Explicit collection/search/favorites view state | Keep headings, empty messages, and navigation consistent while reusing one card grid | Suggested and implemented by Codex |
+| Fetch favorite details from existing lookup endpoints in batches of five | Include saved Pokemon from all collection pages without a new backend API; client requests still go only to our REST backend | Suggested and implemented by Codex |
+| Supported Node 24.21+ within 24.x and npm 11.x | Keep native SQLite and TypeScript execution on a tested runtime line; engine checks and .nvmrc make prerequisites explicit | Suggested and implemented by Codex |
+| Node-based setup with npm ci for all packages | Install committed versions on each OS without shell-specific scripts or copied native dependencies | Suggested and implemented by Codex |
+| Optional root .env and module-relative paths | Configure ports and writable database location without machine-specific source edits; source and compiled server share the same database | Suggested and implemented by Codex |
+| Express serves built React output | Provide a root npm start command with one local origin for UI and API, while retaining Vite for development | Suggested and implemented by Codex |
+| Three-OS CI plus restart smoke check | Continuously test setup, builds, database creation, and persistence; Linux/macOS verification requires the GitHub workflow to run | Suggested and implemented by Codex |
 | Backend PokéAPI wrapper | Keep Pokémon data requests on the server and expose a smaller response shape with explicit measurement units | Assignment requirement; implementation designed by Codex |
 | One-hour bounded in-memory caches | No extra service or database; restarting clears entries and multiple processes do not share the cache | Suggested and implemented by Codex |
 | Shared pending requests and batches of five detail requests per page | Reduce duplicate fetches and limit upstream request bursts for a list request | Suggested and implemented by Codex |
@@ -145,3 +174,98 @@
   no application change was needed for that failure.
 - No new application dependencies or backend changes were required. Visual layout
   was not checked in a browser; DOM checks do not measure responsive layout.
+- The user later flagged the deprecated `FormEvent` annotation. Codex checked the
+  installed React declarations, replaced it with React's `SubmitEvent<HTMLFormElement>`,
+  and verified the frontend build. This corrected the type used in the initial handler.
+
+### Local SQLite favorites verification
+
+- `npm.cmd test`: all 21 backend tests passed, including six new favorites tests.
+  Verified persistence across closing/reopening a real SQLite file, empty lists,
+  browser isolation, duplicate/concurrent additions, invalid headers and IDs,
+  unknown Pokemon, upstream failure, and UUID case normalization.
+- `npm.cmd run build` and `npm.cmd run lint` passed.
+- A temporary DOM check used the actual React components and Vite proxy, real
+  Pokemon data, and an isolated SQLite file. Checked pending/confirmed button
+  states, save failure/retry, persistence after React remount, list/search
+  consistency, pagination/404 regressions, loading failure/retry, UUID persistence,
+  browser isolation, and request cleanup. Its scratch database was removed afterward.
+- Initialized the normal server/data/pokedex.sqlite file without adding test rows,
+  and verified that Git ignores it. Application dependency and lockfiles did not change.
+- Server initialization now owns the store and closes it on shutdown; importing
+  app.ts no longer opens a database. Existing Pokemon HTTP tests use memory stores.
+- The UI is marked as favorite only after the API confirms the save. Favorites
+  are add-only, consistent with the requested scope.
+- Visual layout remains unverified in a browser; the DOM check verifies behavior.
+
+### Portability verification
+
+- `npm.cmd run verify` passed locally: frontend lint, backend/test type-checks,
+  all 21 tests, both builds, and the new compiled-server smoke check.
+- Copied source and lockfiles into a separate OS temporary folder with spaces in
+  its name, without node_modules, build output, .env, or database files. Ran
+  `npm.cmd run setup` successfully and then `npm.cmd run verify`; all checks passed.
+- The smoke check created a nested database path with spaces, started from an
+  unrelated working directory, served React and its JS bundle, retained API JSON
+  404 behavior, and recovered saved IDs after restarting the server. Its temporary
+  SQLite artifacts were removed without touching the user's database.
+- In the fresh copy, tested root `npm start`, source `npm run dev`, custom backend
+  and Vite ports from root .env, Vite proxy requests, automatic database creation,
+  source/compiled path equality, and shared saved records across both startup modes.
+- The first clean-copy harness location was inside node_modules, where Node
+  refuses native TypeScript stripping. Reran the check in the OS temporary folder
+  rather than weakening runtime restrictions. A dev proxy check was corrected to
+  use Vite's printed localhost URL, which may resolve to IPv6.
+- Local environment: Windows, Node 24.21.0, npm 11.19.0. The Windows/macOS/Linux
+  GitHub Actions workflow was added but was not executed or published in this
+  session. Cross-OS runtime results are therefore pending.
+- No application dependency versions were changed; lockfile root metadata now
+  records the runtime engine requirements. Personal SQLite records were preserved.
+
+### Favorite removal verification
+
+- `npm.cmd run verify` passed: linting, type-checks, all 23 backend tests, builds,
+  and the portability smoke check.
+- Two new backend tests verify browser-scoped and repeatable deletion without
+  upstream calls, and removal persisting after reopening SQLite. Existing invalid
+  identity and invalid ID tests now also cover DELETE.
+- A temporary DOM check exercised the real controls through the API and an isolated
+  SQLite file: pending removal, blocked double-clicks, removal failure/retry,
+  persistence after remount, list/search consistency, re-adding, and navigation
+  while deletion completes. Existing favorites and search checks also passed.
+- Favorite IDs are filtered from shared React state only after API success; the
+  confirmed star state stays unchanged on failure. No real user favorites were
+  removed during testing, and the scratch database was cleaned up.
+- No dependencies or schema migration were needed. The browser layout was not
+  visually checked; DOM checks cover interaction behavior.
+
+### Favorites grid verification
+
+- `npm.cmd run verify` passed: linting, type-checks, all 23 backend tests, both
+  builds, and the compiled-server portability smoke check.
+- The temporary DOM check used the real React components, Vite proxy, and SQLite,
+  with controlled Pokemon fixtures and an isolated memory store. Verified seven
+  saved Pokemon spanning multiple collection pages, batches of five, selected
+  button state, no favorites pagination, repeated loading, empty/loading/error
+  states, retry, return to the prior page, search navigation, immediate removal,
+  removal of the last item, and persisted empty state after React remount.
+- Verified stale favorite-detail responses cannot replace the collection after
+  navigation. Also held an add request until after opening Favorites and confirmed
+  the newly saved Pokemon appeared automatically when it completed.
+- An initial request-ID snapshot was revised to follow shared favorite IDs,
+  covering saves that finish after navigation. A test fixture assertion was
+  corrected to match the card's existing hyphen-to-space display formatting.
+- Existing local favorite records were not modified by verification. No new
+  application dependencies, database schema, or backend endpoints were needed.
+- Layout was not visually verified in a browser; interaction checks used jsdom.
+
+### Additional comment review verification
+
+- Added concise explanations for React state/effect cleanup, controlled inputs,
+  favorite synchronization, functional state updates, TypeScript assertions and
+  nullable values, request validation, SQLite statements, cache behavior, and tests.
+- Compared all 21 files to a snapshot from before editing. Non-comment lines were
+  unchanged, and TypeScript transpilation produced identical JavaScript tokens.
+  The comparison normalized the existing UTF-8 byte-order marks when reading files.
+- `npm.cmd run verify` passed: linting, type-checking, all 23 backend tests, builds,
+  and the portability smoke check. No application logic or dependencies changed.

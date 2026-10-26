@@ -33,6 +33,7 @@ test("cached values expire at the TTL boundary", async () => {
   });
 
   assert.equal(await get("pikachu"), 1);
+  // The entry is fresh just before expiry, but must reload at the exact boundary.
   time = 999;
   assert.equal(await get("pikachu"), 1);
   time = 1000;
@@ -41,6 +42,7 @@ test("cached values expire at the TTL boundary", async () => {
 
 test("a full cache evicts the oldest stored entry", async () => {
   let calls = 0;
+  // A tiny capacity lets this test force eviction with just three distinct keys.
   const get = createCachedLoader(
     async (key) => {
       calls += 1;
