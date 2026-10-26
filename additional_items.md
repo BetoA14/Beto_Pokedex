@@ -1,5 +1,32 @@
 # Additional project notes
 
+## What I would do next
+
+- **Improve search and navigation:** Allow users to search for multiple Pokémon
+  names or IDs in a single query, and jump directly to a collection page by
+  entering its page number.
+- **Add a dark theme:** Offer a darker color scheme for the interface.
+- **Add a retro Pokémon theme:** Introduce a visual style inspired by the classic
+  Pokémon games.
+
+## Screenshots and demo video
+
+These captures show the running application using real Pokémon data.
+
+| Screenshot | What it shows |
+| --- | --- |
+| [Main collection](screenshots/pokedex.png) | Pokémon cards with images, names, types, measurements, and favorite controls. |
+| [Search result](screenshots/pokedex-search.png) | Searching for `pikachu` and displaying its matching card. |
+| [Favorites](screenshots/pokedex-favorites.png) | Four saved favorites: Bulbasaur, Charmander, Squirtle, and Pikachu. |
+| [Page index](screenshots/pokedex-page-index.png) | The collection's `21–40 of 1,351` range and Previous/Next controls. |
+
+The [13.6-second demo video](videos/pokedex-demo.mp4) shows browsing the collection,
+searching for Pikachu, adding it to favorites, opening the favorites view, and
+returning to browse more cards. It is an MP4 and stays below the 15-second limit.
+
+Favorites shown in the captures used a separate demo browser identity; temporary
+records were cleaned up afterward, preserving the project author's saved favorites.
+
 ## Time spent and work breakdown
 
 **Approximately 8 hours total**, based on the project author's estimate.
