@@ -5,6 +5,7 @@ import test from 'node:test'
 import { createApp } from '../src/app.ts'
 import { createFavoritesStore } from '../src/db/favorites.ts';
 import { createPokemonService } from '../src/services/pokemon.ts'
+import { immediateLimiter } from './helpers.ts';
 
 // Minimal valid upstream fixture containing every field our parser consumes.
 function pokemon(id = 25, name = 'pikachu') {
@@ -27,7 +28,7 @@ function pokemon(id = 25, name = 'pikachu') {
 async function withApi(fetcher: typeof fetch, check: (baseUrl: string) => Promise<void>) {
   // Keep the existing Pokemon tests independent of the user's local database.
   const favorites = createFavoritesStore(':memory:');
-  const server = createApp(createPokemonService({ fetcher }), favorites).listen(0, '127.0.0.1')
+  const server = createApp(createPokemonService({ fetcher, limiter: immediateLimiter }), favorites).listen(0, '127.0.0.1')
   // Wait for the listening event before issuing requests to the temporary server.
   await once(server, 'listening')
   try {
@@ -210,7 +211,7 @@ test('missing artwork falls back to a sprite and missing images remain null', as
 test('list detail requests are limited to five at a time', async () => {
   let active = 0
   let maximum = 0
-  const service = createPokemonService({ fetcher: async (input) => {
+  const service = createPokemonService({ limiter: immediateLimiter, fetcher: async (input) => {
     const url = String(input)
     if (url.includes('?')) {
       return Response.json({ count: 12, results: Array.from({ length: 12 }, (_, id) => ({ name: `pokemon-${id + 1}` })) })
@@ -233,6 +234,7 @@ test('service cache refreshes after one hour', async () => {
   let calls = 0
   const service = createPokemonService({
     now: () => time,
+    limiter: immediateLimiter,
     fetcher: async () => { calls += 1; return Response.json(pokemon()) },
   })
   await service.getPokemon('pikachu')

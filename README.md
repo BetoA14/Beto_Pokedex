@@ -207,6 +207,7 @@ Errors use a JSON body such as `{ "message": "Pokemon not found" }`.
 | 400 | Invalid pagination or lookup input |
 | 404 | Pokémon or endpoint not found |
 | 502 | PokéAPI network/HTTP failure, invalid JSON, or unexpected response shape |
+| 503 | Upstream queue is busy or PokéAPI requested a cooldown; includes `Retry-After` in seconds |
 | 504 | PokéAPI request exceeded the 10-second timeout |
 | 500 | Unexpected internal error |
 
@@ -224,6 +225,33 @@ Errors use a JSON body such as `{ "message": "Pokemon not found" }`.
   details in batches of up to five. These detail responses are reused by lookups.
 - The cache is in memory: restarting the server clears it, and multiple processes
   do not share entries. This cache is separate from the persistent favorites database.
+
+### Global outbound rate limiter
+
+All actual PokéAPI requests share one queue per Node.js server process. Requests
+start at least **50 ms apart (20 per second)**, with at most **5 in flight**,
+including reading response bodies. Cache hits and shared pending lookups do not
+consume additional slots. Health checks and local favorites reads/removals do not
+use this queue.
+
+Twenty requests per second is an application choice, not a published
+PokéAPI quota. It complements [PokéAPI's fair-use guidance](https://pokeapi.co/docs/v2/#fairuse)
+to cache resources and limit request frequency. A completely uncached 20-card page
+needs 21 upstream requests, so their starts span at least one second, plus
+response time.
+
+- At most **50 requests wait** in the queue, each for at most **15 seconds**.
+  Excess or expired work receives HTTP **503**, `Retry-After`, and `Cache-Control: no-store`.
+- The existing **10-second network timeout starts when dispatched**, after queueing.
+- Upstream **429** responses pause the shared queue using `Retry-After` (seconds
+  or an HTTP date), with a one-second fallback. Upstream **503** responses with a
+  valid `Retry-After` also pause it. The API returns 503 with a retry hint;
+  requests are not automatically retried.
+- A deployment with several Node.js processes would need shared limiter state
+  to enforce one combined budget. This limiter does not limit incoming client requests.
+
+Implementation: [shared limiter](server/src/services/rate-limiter.ts) and
+[PokéAPI service](server/src/services/pokemon.ts).
 
 With the backend running, try these directly in your browser:
 
@@ -281,7 +309,7 @@ continues to listen on `127.0.0.1`, so this setup remains local to this computer
 
 ## Portability verification
 
-`npm run verify` runs the 23 backend tests, builds both applications, then starts
+`npm run verify` runs the 38 backend tests, builds both applications, then starts
 the compiled server from a different working directory. It checks serving the
 React bundle, a custom port, automatic database/folder creation in a path with
 spaces, and favorites surviving a server restart. These checks need no PokéAPI

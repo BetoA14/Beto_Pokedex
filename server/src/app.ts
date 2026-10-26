@@ -44,6 +44,11 @@ export function createApp(
   ) => {
     // instanceof separates our expected HTTP errors from unexpected server failures.
     if (error instanceof HttpError) {
+      // A retry hint lets clients recover from temporary global pressure without tight retries.
+      if (error.retryAfterSeconds !== undefined) {
+        response.set("Retry-After", String(error.retryAfterSeconds));
+        response.set("Cache-Control", "no-store");
+      }
       response.status(error.status).json({ message: error.message });
       return;
     }

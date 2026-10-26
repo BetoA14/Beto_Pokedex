@@ -59,19 +59,37 @@ Caching and reducing unnecessary requests support
 
 ### Rate limiting and upstream failures
 
-**The wrapper does not currently implement a global rate limiter.** Batching five
-requests limits concurrency within one list operation, not requests per second
-or total concurrency across all clients. Identical pending keys are shared, but
-many different simultaneous requests can still create substantial upstream load.
+All PokéAPI network requests now pass through one shared queue per Node.js process,
+across collection requests, lookups, and browsers. Starts are spaced at least
+**50 ms apart (20 requests per second)**, with at most **5 requests in flight**,
+including reading their bodies. Cache hits do not use slots. This is separate
+from the existing per-page batches of five.
 
-Each upstream request has a 10-second timeout. Upstream HTTP/network failures
-become controlled 502 responses, and timeouts become 504 responses. Automatic
-retries, backoff, and forwarding an upstream `Retry-After` header are not implemented.
+Twenty requests per second is an application choice supporting
+[PokéAPI's fair-use guidance](https://pokeapi.co/docs/v2/#fairuse), not an official
+quota. A cold 20-card page needs 21 upstream requests, whose starts span at least
+one second plus response time. No production load test has been performed;
+the limit should be reviewed against measured traffic and latency.
 
-Before a larger public deployment, priorities would be a shared outbound request
-queue, an inbound per-client rate limit, and bounded retries that respect upstream
-retry guidance. Limits should be selected from measured traffic and latency;
-no load test or requests-per-second capacity measurement has been recorded.
+The queue holds at most **50 waiting requests**, each for up to **15 seconds**.
+Full queues and expired waits produce 503 responses with a `Retry-After` hint and
+`Cache-Control: no-store`. The separate 10-second network timeout starts only when
+the request leaves the queue. HTTP/network failures otherwise become 502 responses,
+and timeouts become 504 responses. Health checks and local favorites reads/removals
+remain independent of the queue.
+
+An upstream 429 pauses new requests globally within the process. A valid
+`Retry-After`, expressed in seconds or as an HTTP date, determines the pause;
+missing or invalid values fall back to one second. Upstream 503 responses with a
+valid header also trigger a pause. The API returns 503 with a retry hint, without
+automatically retrying the failed request. This follows the purpose of
+[429](https://www.rfc-editor.org/rfc/rfc6585.html#section-4) and
+[`Retry-After`](https://www.rfc-editor.org/rfc/rfc9110.html#name-retry-after).
+
+Implementation: [outbound limiter](server/src/services/rate-limiter.ts).
+For multiple server workers or machines, share limiter state so they use one
+combined budget. A larger public deployment should also consider inbound
+per-client limits; these are not currently implemented.
 
 ### Local storage trade-off
 
@@ -107,7 +125,7 @@ Implementation: [main view](client/src/App.tsx),
 
 ### Verification and remaining checks
 
-Recorded verification includes successful lint/type checks, 23 backend tests,
+Recorded verification includes successful lint/type checks, 38 backend tests,
 builds, portability checks, and jsdom checks of React state and interactions.
 These checks do not establish visual quality or WCAG conformance.
 

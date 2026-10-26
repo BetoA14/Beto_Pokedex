@@ -60,6 +60,17 @@
     breakdown, without inventing per-phase hours, and separated implemented
     behavior from scaling recommendations and outstanding accessibility checks.
 
+16. The user requested a global limiter on outbound PokéAPI requests and delegated
+    choosing a sensible requests-per-second limit after checking good practices.
+    Codex consulted PokéAPI's fair-use guidance and HTTP specifications, selected
+    five requests per second, and implemented a shared queue with concurrency,
+    queue-size, and wait-time bounds, upstream cooldowns, comments, and tests.
+
+17. The user requested that an uncached 20-card page take at least one second
+    to load. Codex raised the shared budget to 20 starts per second (50 ms apart),
+    so the list request plus 20 detail requests span at least one second. Queue,
+    concurrency, and timeout bounds were retained; tests and documentation were updated.
+
 ## Technical decisions and ownership
 
 | Decision | Reason and trade-off | Origin |
@@ -88,6 +99,9 @@
 | Three-OS CI plus restart smoke check | Continuously test setup, builds, database creation, and persistence; Linux/macOS verification requires the GitHub workflow to run | Suggested and implemented by Codex |
 | Backend PokéAPI wrapper | Keep Pokémon data requests on the server and expose a smaller response shape with explicit measurement units | Assignment requirement; implementation designed by Codex |
 | One-hour bounded in-memory caches | No extra service or database; restarting clears entries and multiple processes do not share the cache | Suggested and implemented by Codex |
+| Process-wide outbound limiter: 20 starts/second, max 5 in flight | Space starts by 50 ms using a monotonic clock; 21 requests for a cold 20-card page span at least one second. Cached results bypass the queue. App policy, not an official PokéAPI quota. Multiple processes would need shared state | Limiter and revised page timing requested by user; implementation selected by Codex |
+| Bounded FIFO queue: 50 waiting requests, 15-second wait limit | Bound queued work and return 503 with Retry-After under overload; start the separate 10-second network timeout only at dispatch | Suggested and implemented by Codex |
+| Shared upstream cooldown on 429 or 503 with valid Retry-After | Respect seconds or HTTP dates, use a one-second fallback for 429, and keep the longest cooldown. No automatic retries or new dependency | Suggested and implemented by Codex |
 | Shared pending requests and batches of five detail requests per page | Reduce duplicate fetches and limit upstream request bursts for a list request | Suggested and implemented by Codex |
 | Exact-name/ID lookup and offset pagination | Small REST API with local navigation links; substring matching is not included | Suggested and implemented by Codex |
 | Manual runtime validation of upstream JSON | Reject unexpected data before caching; avoids a new validation dependency for this scope | Suggested and implemented by Codex following the user's questions |
@@ -274,3 +288,40 @@
   The comparison normalized the existing UTF-8 byte-order marks when reading files.
 - `npm.cmd run verify` passed: linting, type-checking, all 23 backend tests, builds,
   and the portability smoke check. No application logic or dependencies changed.
+
+### Initial global rate limiter verification (5 requests/second)
+
+- Consulted [PokéAPI's fair-use guidance](https://pokeapi.co/docs/v2/#fairuse),
+  [HTTP 429](https://www.rfc-editor.org/rfc/rfc6585.html#section-4), and
+  [`Retry-After`](https://www.rfc-editor.org/rfc/rfc9110.html#name-retry-after).
+  Five requests per second is an application design choice, not a published quota.
+- All 37 backend tests passed, including 14 new limiter tests. Fake clocks check
+  200 ms spacing, FIFO order, bounded concurrency, queue overflow/expiry,
+  recovery after failures, and no catch-up burst after an event-loop delay.
+- Tests verify cache hits/pending duplicates use no additional slot, response
+  bodies retain their concurrency slot, and the network timeout begins at dispatch.
+  Separate service instances share the default process-wide limiter.
+- Tested upstream cooldowns, seconds/date retry hints, HTTP 503 headers, and local
+  health/favorites access while the upstream queue is full. Tests use controlled
+  fetch fixtures and isolated SQLite storage; no public PokéAPI traffic or real
+  favorites were needed. Existing response/cache tests explicitly inject an
+  immediate limiter; dedicated limiter tests exercise the real scheduling behavior.
+- `npm.cmd run lint`, `npm.cmd run build`, and `npm.cmd run smoke` passed. The
+  smoke check covered compiled frontend/API delivery, custom configuration,
+  database creation, and persistence after restart.
+- No dependencies or database schema changes were required. Distributed limiting
+  and production capacity/load testing remain outside the current local setup.
+
+### One-second uncached page timing verification
+
+- Raised the default to 20 starts per second, spaced 50 ms apart, while retaining
+  the five-request concurrency cap, bounded queue, and upstream cooldown behavior.
+- Updated pacing tests and added a fake-clock service test using a cold 20-card
+  page with immediate upstream responses. Verified that its 21 network calls span
+  one second, the page remains incomplete at 999 ms, and a repeat uses the cache
+  without more network calls or a forced delay. Real network time can add latency.
+- The first run exposed an outdated expected array length after expanding the
+  pacing test; corrected the assertion to use the actual number of test jobs.
+- `npm.cmd run verify` passed: lint/type checks, all 38 backend tests, both builds,
+  and the compiled-server/database persistence smoke check. No dependencies or
+  database schema changes were needed.
